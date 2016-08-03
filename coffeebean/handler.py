@@ -6,12 +6,14 @@
 """
 from tornado.web import RequestHandler
 from .session import Session
+from .log import logger
 
 
 class BaseRequestHandler(RequestHandler):
     def __init__(self, application, request, **kwargs):
         super().__init__(application, request, **kwargs)
         self.session = Session(self.application.session_manager, self)
+        self.logger = logger
 
     def initialize(self):
         pass
