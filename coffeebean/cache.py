@@ -10,7 +10,7 @@ import settings
 
 class Cache(object):
     def __init__(self):
-        conf = settings.CACHE
+        conf = settings.CONF['cache']
         self._redis = redis.StrictRedis(host=conf['host'], port=conf['port'], db=conf['db'])
 
     def get_redis(self):

@@ -9,6 +9,8 @@ from tornado.ioloop import IOLoop
 from tornado.netutil import bind_sockets
 from tornado.options import define, options
 
+import sys
+
 import settings
 from application import Application, tornado
 
@@ -33,7 +35,8 @@ def set_log_setting():
     设置日志配置，改变tornado默认日志配置
     :return:
     """
-    # options['log_file_prefix'] = 'log'
+    if sys.platform != 'win32':
+        options['log_file_prefix'] = 'log'
     options['log_rotate_mode'] = 'time'    # 按时间分割日志，默认按天
 
 

@@ -4,7 +4,7 @@
 @author Yuriseus
 @create 2016-8-1 14:12
 """
-
+import configparser
 import tornado.web
 from tornado.util import import_object
 
@@ -31,6 +31,9 @@ class Application(tornado.web.Application):
         self.interceptor_intercept = None
         self.load_interceptor()
 
+        # 加载配置
+        self.load_conf()
+
     def load_interceptor(self):
         self.interceptor_intercept = []
         for interceptor_path in settings.INTERCEPTOR_CLASSES:
@@ -38,6 +41,20 @@ class Application(tornado.web.Application):
             ic = ic_class()
             if hasattr(ic, 'intercept'):
                 self.interceptor_intercept.append(ic.intercept)
+
+    def load_conf(self):
+        parser = configparser.RawConfigParser()
+        parser.read(settings.DEFAULT_CON_PATH, 'utf-8')
+        sections = parser.sections()
+        conf = settings.CONF
+        for s in sections:
+            if s not in conf:
+                conf[s] = {}
+            items = parser.items(s)
+            for item in items:
+                conf[s][item[0]] = item[1]
+
+
 
 
 

@@ -21,10 +21,8 @@ INTERCEPTOR_CLASSES = [
     'interceptor.auth.AuthInterceptor'
 ]
 
-# 缓存
-CACHE = {
-    'host': 'localhost',
-    'port': 6379,
-    'db': 0
-}
+DEFAULT_CON_PATH = 'conf/default.conf'
+
+# 包含字典的字典，解析自DEFAULT_CON_PATH
+CONF = {}
 
