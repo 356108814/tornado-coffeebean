@@ -9,7 +9,7 @@ import hmac
 import pickle
 import uuid
 
-from .cache import cache
+from .cache import Cache
 
 
 class SessionData(dict):
@@ -54,6 +54,8 @@ class SessionManager(object):
         self.secret = secret
         self.session_timeout = session_timeout
 
+        self.cache = Cache.current()
+
     def get(self, request_handler=None):
 
         if request_handler is None:
@@ -89,13 +91,13 @@ class SessionManager(object):
         request_handler.set_secure_cookie('session_id', session.session_id)
         request_handler.set_secure_cookie('verification', session.hmac_key)
         session_data = pickle.dumps(dict(session.items()), pickle.HIGHEST_PROTOCOL)
-        cache.setex(session.session_id, self.session_timeout, session_data)
+        self.cache.setex(session.session_id, self.session_timeout, session_data)
 
     def _fetch(self, session_id):
         try:
-            session_data = raw_data = cache.get(session_id)
+            session_data = raw_data = self.cache.get(session_id)
             if raw_data is not None:
-                cache.setex(session_id, self.session_timeout, raw_data)
+                self.cache.setex(session_id, self.session_timeout, raw_data)
                 session_data = pickle.loads(raw_data)
             if isinstance(session_data, dict):
                 return session_data

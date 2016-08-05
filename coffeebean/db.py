@@ -49,15 +49,15 @@ class BaseModel(__Base):
 
     @declared_attr
     def Q(cls):
-        return sqlalchemy.query()
+        return SQLAlchemy.instance().query()
 
     @declared_attr
     def session(cls):
-        return sqlalchemy.session
+        return SQLAlchemy.instance().session
 
     @declared_attr
     def connect(cls):
-        return sqlalchemy.connect
+        return SQLAlchemy.instance().connect
 
     @classmethod
     def execute_query(cls, sql, param_dict):
@@ -96,6 +96,13 @@ class SQLAlchemy(object):
         self._session = None
         self._connect = None
 
+    @staticmethod
+    def instance():
+        if not hasattr(SQLAlchemy, "_instance"):
+            conf = settings.CONF['db']
+            SQLAlchemy._instance = SQLAlchemy(conf['host'], conf['port'], conf['user'], conf['password'], conf['db'])
+        return SQLAlchemy._instance
+
     @property
     def session(self):
         if not self._session:
@@ -105,7 +112,7 @@ class SQLAlchemy(object):
     @property
     def connect(self):
         if not self._connect:
-            engine = create_engine(self._db_url, echo=True)
+            engine = create_engine(self._db_url, echo=False)
             self._connect = engine.connect()
         return self._connect
 
@@ -123,8 +130,8 @@ class SQLAlchemy(object):
         if self._session:
             self._session.remove()
 
-conf = settings.CONF['db']
-sqlalchemy = SQLAlchemy(conf['host'], conf['port'], conf['user'], conf['password'], conf['db'])
+# conf = settings.CONF['db']
+# sqlalchemy = SQLAlchemy(conf['host'], conf['port'], conf['user'], conf['password'], conf['db'])
 
 if __name__ == '__main__':
     from models.user import User

@@ -5,9 +5,11 @@
 @create 2016-8-3 20:10
 """
 from coffeebean.log import logger
+from coffeebean.cache import Cache
 
 
 class BaseService(object):
     def __init__(self):
         self.logger = logger
+        self.cache = Cache.current()
 

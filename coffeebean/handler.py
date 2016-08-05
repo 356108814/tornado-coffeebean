@@ -7,6 +7,7 @@
 from tornado.web import RequestHandler
 from .session import Session
 from .log import logger
+from .cache import Cache
 
 
 class BaseRequestHandler(RequestHandler):
@@ -14,6 +15,7 @@ class BaseRequestHandler(RequestHandler):
         super().__init__(application, request, **kwargs)
         self.session = Session(self.application.session_manager, self)
         self.logger = logger
+        self.cache = Cache.current()
 
     def initialize(self):
         pass
