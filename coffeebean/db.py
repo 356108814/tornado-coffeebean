@@ -4,7 +4,7 @@ db数据库操作模块。默认pymysql+sqlalchemy
 @author Yuriseus
 @create 2016-8-4 14:03
 """
-
+from math import ceil
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta, declared_attr
@@ -88,6 +88,75 @@ class BaseModel(__Base):
         return str(self.to_dict())
 
 
+class Pagination(object):
+    """分页对象"""
+
+    def __init__(self, query, current_page, page_size, total, items):
+        # 查询对象
+        self.query = query
+        # 当前页
+        self.current_page = current_page
+        # 每页显示数量
+        self.page_size = page_size
+        # 总记录数
+        self.total = total
+        # 当前页数据对象
+        self.items = items
+
+    @property
+    def pages(self):
+        if self.page_size == 0:
+            pages = 0
+        else:
+            pages = int(ceil(self.total / float(self.page_size)))
+        return pages
+
+    def prev(self, error_out=False):
+        return self.query.paginate(self.current_page - 1, self.page_size, error_out)
+
+    @property
+    def prev_num(self):
+        return self.current_page - 1
+
+    @property
+    def has_prev(self):
+        return self.current_page > 1
+
+    def next(self, error_out=False):
+        return self.query.paginate(self.current_page + 1, self.page_size, error_out)
+
+    @property
+    def has_next(self):
+        return self.current_page < self.pages
+
+    @property
+    def next_num(self):
+        return self.current_page + 1
+
+
+class BaseQuery(Query):
+    def paginate(self, current_page, page_size=20, default=None):
+        """
+        执行分页查询
+        :param current_page:
+        :param page_size:
+        :param default:
+        :return: Pagination
+        """
+        if current_page < 1:
+            return default
+        items = self.limit(page_size).offset((current_page - 1) * page_size).all()
+        if not items and current_page != 1:
+            return default
+
+        if current_page == 1 and len(items) < page_size:
+            total = len(items)
+        else:
+            total = self.order_by(None).count()
+
+        return Pagination(self, current_page, page_size, total, items)
+
+
 class SQLAlchemy(object):
 
     def __init__(self, host, port, user, password, db, **kwargs):
@@ -117,7 +186,8 @@ class SQLAlchemy(object):
         return self._connect
 
     def query(self):
-        return self.session.query_property(Query)    # 查询出模型属性值
+        # BaseQuery 目前提供了分页查询
+        return self.session.query_property(BaseQuery)    # 查询出模型属性值
 
     @staticmethod
     def create_session(db_url, **kwargs):
@@ -130,14 +200,20 @@ class SQLAlchemy(object):
         if self._session:
             self._session.remove()
 
-# conf = settings.CONF['db']
-# sqlalchemy = SQLAlchemy(conf['host'], conf['port'], conf['user'], conf['password'], conf['db'])
 
 if __name__ == '__main__':
-    from models.user import User
+    pass
+    # conf = settings.CONF['db']
+    # from models.user import User
+    # sqlalchemy = SQLAlchemy('localhost', 3306, 'root', 'root', 'test')
+    # user = User.Q.first()
+    # user.name = 'Hello Yuri'
+    # User.session.add(user)
+    # User.session.commit()
+    # from models.user import User
     # l = User.session.query(User).all()
     # sql = 'select * from user where name= :name'
     # l = User.execute_query(sql, {'name': 'yuri'})
-    sql = 'INSERT INTO user (name, age) VALUES (:name, :age)'
-    l = User.execute_update(sql, {'name': 'hh', 'age': 22})
+    # sql = 'INSERT INTO user (name, age) VALUES (:name, :age)'
+    # l = User.execute_update(sql, {'name': 'hh', 'age': 22})
 

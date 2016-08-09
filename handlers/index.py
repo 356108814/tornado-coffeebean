@@ -12,7 +12,8 @@ service = UserService()
 
 class IndexHandler(BaseHandler):
     def get(self):
-        users = service.get_users()
+        pagination = service.get_users()
+        users = pagination.items
         print(users)
         self.finish('Hello %s' % self.session['user'])
         pass
