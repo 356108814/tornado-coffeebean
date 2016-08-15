@@ -6,9 +6,10 @@ db数据库操作模块。默认pymysql+sqlalchemy
 """
 from math import ceil
 from sqlalchemy import create_engine
-from sqlalchemy.sql import text
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta, declared_attr
 from sqlalchemy.orm import scoped_session, sessionmaker, Query
+from sqlalchemy.sql import text
+
 import settings
 
 
@@ -61,25 +62,11 @@ class BaseModel(__Base):
 
     @classmethod
     def execute_query(cls, sql, param_dict):
-        stmt = text(sql)
-        if param_dict and isinstance(param_dict, dict):
-            stmt = stmt.bindparams(**param_dict)
-        records = []
-        row_proxys = cls.connect.execute(stmt).fetchall()
-        for _, row in enumerate(row_proxys):
-            one = {}
-            for i, t in enumerate(row.items()):
-                one[t[0]] = t[1]
-            records.append(one)
-        return records
+        return SQLAlchemy.instance().execute_query(sql, param_dict)
 
     @classmethod
     def execute_update(cls, sql, param_dict):
-        stmt = text(sql)
-        if param_dict and isinstance(param_dict, dict):
-            stmt = stmt.bindparams(**param_dict)
-        result_proxy = cls.connect.execute(stmt)
-        return result_proxy.lastrowid
+        return SQLAlchemy.instance().execute_update(sql, param_dict)
 
     def __str__(self):
         return str(self.to_dict())
@@ -94,7 +81,7 @@ class Pagination(object):
     def __init__(self, query, current_page, page_size, total, items):
         # 查询对象
         self.query = query
-        # 当前页
+        # 当前页，从1开始
         self.current_page = current_page
         # 每页显示数量
         self.page_size = page_size
@@ -133,9 +120,30 @@ class Pagination(object):
     def next_num(self):
         return self.current_page + 1
 
+    def to_dict(self):
+        is_need_transform = False
+        if self.items and isinstance(self.items[0], BaseModel):
+            is_need_transform = True
+        if is_need_transform:
+            items = [item.to_dict() for item in self.items]
+        else:
+            items = self.items
+        return {
+            'current_page': self.current_page,
+            'page_size': self.page_size,
+            'total': self.total,
+            'items': items
+        }
+
 
 class BaseQuery(Query):
-    def paginate(self, current_page, page_size=20, default=None):
+
+    def __init__(self, entities, session=None):
+        super().__init__(entities, session)
+        self.current_page = 1
+        self.page_size = 10
+
+    def paginate(self, current_page, page_size=10, default=None):
         """
         执行分页查询
         :param current_page:
@@ -143,6 +151,8 @@ class BaseQuery(Query):
         :param default:
         :return: Pagination
         """
+        self.current_page = current_page
+        self.page_size = page_size
         if current_page < 1:
             return default
         items = self.limit(page_size).offset((current_page - 1) * page_size).all()
@@ -155,6 +165,72 @@ class BaseQuery(Query):
             total = self.order_by(None).count()
 
         return Pagination(self, current_page, page_size, total, items)
+
+    def get_items(self):
+        return self.limit(self.page_size).offset((self.current_page - 1) * self.page_size).all()
+
+    def get_count(self):
+        return self.order_by(None).count()
+
+
+class SqlQuery(object):
+    """
+    sql查询对象，根据传入的sql语句查询。
+    提供分页查询
+    """
+    def __init__(self, sql, param_dict=None, sqlalchemy=None):
+        self.sql = sql
+        self.param_dict = param_dict
+        self.current_page = 1
+        self.page_size = 10
+        if not sqlalchemy:
+            sqlalchemy = SQLAlchemy.instance()
+        self.sqlalchemy = sqlalchemy
+
+    def paginate(self, current_page, page_size=10):
+        """
+        执行分页查询
+        :param current_page:
+        :param page_size:
+        :return: Pagination
+        """
+        self.current_page = current_page
+        self.page_size = page_size
+        if current_page < 1:
+            return []
+        items = self.get_items()
+        if not items and current_page != 1:
+            return []
+
+        if current_page == 1 and len(items) < page_size:
+            total = len(items)
+        else:
+            total = self.get_count()
+
+        return Pagination(self, current_page, page_size, total, items)
+
+    def get_items(self):
+        sql = self.sql + ' LIMIT %s, %s' % ((self.current_page - 1) * self.page_size, self.page_size)
+        return self.sqlalchemy.execute_query(sql, self.param_dict)
+
+    def get_count(self):
+        # 替换查询字段为count(*)
+        index = self.sql.find('FROM')
+        if index == -1:
+            index = self.sql.find('from')
+        sql = 'select count(*) as total ' + self.sql[index:]
+        result = self.sqlalchemy.execute_query(sql, self.param_dict)
+        return result[0]['total']
+
+    def all(self):
+        return self.sqlalchemy.execute_query(self.sql, self.param_dict)
+
+    def first(self):
+        result = self.sqlalchemy.execute_query(self.sql, self.param_dict)
+        if result:
+            return result[0]
+        else:
+            return None
 
 
 class SQLAlchemy(object):
@@ -188,6 +264,30 @@ class SQLAlchemy(object):
     def query(self):
         # BaseQuery 目前提供了分页查询
         return self.session.query_property(BaseQuery)    # 查询出模型属性值
+
+    @staticmethod
+    def sql_query(sql, param_dict=None, sqlalchemy=None):
+        return SqlQuery(sql, param_dict, sqlalchemy)
+
+    def execute_query(self, sql, param_dict):
+        stmt = text(sql)
+        if param_dict and isinstance(param_dict, dict):
+            stmt = stmt.bindparams(**param_dict)
+        records = []
+        row_proxys = self.connect.execute(stmt).fetchall()
+        for _, row in enumerate(row_proxys):
+            one = {}
+            for i, t in enumerate(row.items()):
+                one[t[0]] = t[1]
+            records.append(one)
+        return records
+
+    def execute_update(self, sql, param_dict):
+        stmt = text(sql)
+        if param_dict and isinstance(param_dict, dict):
+            stmt = stmt.bindparams(**param_dict)
+        result_proxy = self.connect.execute(stmt)
+        return result_proxy.lastrowid
 
     @staticmethod
     def create_session(db_url, **kwargs):

@@ -38,8 +38,8 @@ class BaseHandler(BaseRequestHandler):
             response['success'] = True
         else:
             response['success'] = False
-        response['errcode'] = response_code[0]
-        error_msg = response_code[1]
+        response['errcode'] = response_code.value[0]
+        error_msg = response_code.value[1]
         if error_msg_params and (isinstance(error_msg_params, list) or isinstance(error_msg_params, tuple)):
             error_msg = error_msg.format(*error_msg_params)
         response['errmsg'] = error_msg
