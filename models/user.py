@@ -16,3 +16,8 @@ class User(BaseModel):
     name = Column(String(32))
     age = Column(Integer())
     birth = Column(DateTime(), nullable=True)
+
+    @classmethod
+    def get_table_name(cls, column_value):
+        index = column_value['id'] % 64
+        return 'user_%s' % index
