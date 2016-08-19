@@ -7,6 +7,7 @@
 import logging
 import logging.handlers
 import sys
+import settings
 
 
 def _stderr_supports_color():
@@ -80,13 +81,17 @@ class Logger(object):
 
     def get_logger(self, name):
         if not name:
-            name = 'ETL'
+            name = 'tornado-coffeebean'
         if name not in self._loggers:
             temp_logger = logging.getLogger(name)
             temp_logger.setLevel('DEBUG')
             handler = gen_channel(name)
             handler.setFormatter(LogFormatter(color=True))
             temp_logger.addHandler(handler)
+            if settings.DEBUG:    # 调试模式默认也输出到控制台
+                console_handler = logging.StreamHandler()
+                console_handler.setFormatter(LogFormatter(color=False))
+                temp_logger.addHandler(console_handler)
             self._loggers[name] = temp_logger
         return self._loggers[name]
 
