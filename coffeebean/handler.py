@@ -12,7 +12,7 @@ from .cache import Cache
 
 class BaseRequestHandler(RequestHandler):
     def __init__(self, application, request, **kwargs):
-        super().__init__(application, request, **kwargs)
+        super(BaseRequestHandler, self).__init__(application, request, **kwargs)
         self.session = Session(self.application.session_manager, self)
         self.logger = logger
         self.cache = Cache.current()

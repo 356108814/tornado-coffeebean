@@ -98,7 +98,7 @@ class SessionManager(object):
             session_data = raw_data = self.cache.get(session_id)
             if raw_data is not None:
                 self.cache.setex(session_id, self.session_timeout, raw_data)
-                session_data = pickle.loads(raw_data)
+                session_data = pickle.loads(str(raw_data))
             if isinstance(session_data, dict):
                 return session_data
             else:

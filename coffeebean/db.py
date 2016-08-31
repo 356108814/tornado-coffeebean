@@ -173,7 +173,7 @@ class Pagination(object):
 class BaseQuery(Query):
 
     def __init__(self, entities, session=None):
-        super().__init__(entities, session)
+        super(BaseQuery, self).__init__(entities, session)
         self.current_page = 1
         self.page_size = 10
 

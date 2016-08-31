@@ -7,7 +7,9 @@
 from abc import ABCMeta, abstractmethod
 
 
-class Interceptor(object, metaclass=ABCMeta):
+# class Interceptor(object, metaclass=ABCMeta):
+class Interceptor(object):
+
     def init(self):
         pass
 

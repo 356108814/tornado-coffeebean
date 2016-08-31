@@ -45,7 +45,7 @@ class LogFormatter(logging.Formatter):
 
     def __init__(self, color=True, fmt=DEFAULT_FORMAT,
                  datefmt=DEFAULT_DATE_FORMAT, colors=DEFAULT_COLORS):
-        super().__init__(fmt, datefmt=datefmt)
+        super(LogFormatter, self).__init__(fmt, datefmt=datefmt)
         self._fmt = fmt
 
         self._colors = {}

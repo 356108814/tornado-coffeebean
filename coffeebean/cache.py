@@ -28,3 +28,5 @@ class Cache(object):
     def current():
         return Cache.instance().get_redis()
 
+cache = Cache.current()
+

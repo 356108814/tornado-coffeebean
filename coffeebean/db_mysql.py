@@ -42,6 +42,7 @@ class DBMySQL(object):
         @param is_fetchone 是否只返回一条记录
         @return dict列表或dict
         """
+        result = None
         with self.connection.cursor() as cursor:
             # sql格式化
             if params_dict:

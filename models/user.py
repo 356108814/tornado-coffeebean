@@ -15,7 +15,6 @@ class User(BaseModel):
     id = Column(Integer(), primary_key=True)
     name = Column(String(32))
     age = Column(Integer())
-    birth = Column(DateTime(), nullable=True)
 
     @classmethod
     def get_table_name(cls, column_value):
