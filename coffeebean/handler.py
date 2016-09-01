@@ -5,6 +5,7 @@
 @create 2016-8-1 15:20
 """
 from tornado.web import RequestHandler
+from coffeebean.db import SQLAlchemy
 from .session import Session
 from .log import logger
 from .cache import Cache
@@ -18,7 +19,7 @@ class BaseRequestHandler(RequestHandler):
         self.cache = Cache.current()
 
     def initialize(self):
-        pass
+        SQLAlchemy.instance().init_session()
 
     def prepare(self):
         for interceptor_method in self.application.interceptor_intercept:
@@ -27,6 +28,10 @@ class BaseRequestHandler(RequestHandler):
                 break
 
     def on_finish(self):
+        SQLAlchemy.instance().close_session()
+
+    def options(self):
+        # TODO 调用delete为毛先执行options??
         pass
 
 

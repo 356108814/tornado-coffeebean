@@ -38,17 +38,20 @@ class BaseHandler(BaseRequestHandler):
             response['success'] = True
         else:
             response['success'] = False
-        response['errcode'] = response_code.value[0]
-        error_msg = response_code.value[1]
+        response['errcode'] = response_code[0]
+        error_msg = response_code[1]
         if error_msg_params and (isinstance(error_msg_params, list) or isinstance(error_msg_params, tuple)):
             error_msg = error_msg.format(*error_msg_params)
         response['errmsg'] = error_msg
         if not data:
             data = []
         response['data'] = data
-        # 响应类型
-        self.set_header('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS')
-        # 响应头设置
-        self.set_header('Access-Control-Allow-Headers', 'x-requested-with,content-type')
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.set_default_headers()
         self.finish(json.dumps(response, ensure_ascii=False))    # ensure_ascii True为转换为ascii码
+
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Headers', '*')
+        self.set_header('Access-Control-Allow-Methods', 'GET,HEAD,POST,DELETE,PATCH,PUT,OPTIONS')
+        self.set_header('Access-Control-Max-Age', 1000)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')

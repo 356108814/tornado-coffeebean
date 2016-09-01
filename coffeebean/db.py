@@ -271,9 +271,14 @@ class SQLAlchemy(object):
 
     def __init__(self, host, port, user, password, db, **kwargs):
         param = {'host': host, 'port': port, 'user': user, 'password': password, 'db': db}
-        self._db_url = 'mysql+pymysql://{user}:{password}@{host}:{port}/{db}'.format(**param)
-        self._session = None
+        self._db_url = 'mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8'.format(**param)
+        # self._session = None
         self._connect = None
+        self._engine = create_engine(self._db_url, echo=True, encoding='utf-8')
+        self._session_factory = sessionmaker(autocommit=False, **kwargs)    # 默认关闭事务
+        self._session_factory.configure(bind=self._engine)
+        self.ScopedSession = scoped_session(self._session_factory)
+        self._session = self.ScopedSession
 
     @staticmethod
     def instance():
@@ -284,14 +289,12 @@ class SQLAlchemy(object):
 
     @property
     def session(self):
-        if not self._session:
-            self._session = self.create_session(self._db_url)
         return self._session
 
     @property
     def connect(self):
         if not self._connect:
-            engine = create_engine(self._db_url, echo=False)
+            engine = create_engine(self._db_url, echo=False, encoding='utf-8')
             self._connect = engine.connect()
         return self._connect
 
@@ -323,16 +326,20 @@ class SQLAlchemy(object):
         result_proxy = self.connect.execute(stmt)
         return result_proxy.lastrowid
 
-    @staticmethod
-    def create_session(db_url, **kwargs):
-        engine = create_engine(db_url, echo=True)
-        session = sessionmaker(autocommit=False, **kwargs)    # 默认关闭事务
-        session.configure(bind=engine)
-        return scoped_session(session)
+    # @staticmethod
+    # def create_session(db_url, **kwargs):
+    #     engine = create_engine(db_url, echo=True, encoding='utf-8')
+    #     session = sessionmaker(autocommit=True, **kwargs)    # 默认关闭事务
+    #     session.configure(bind=engine)
+    #     return scoped_session(session)
 
-    def remove(self):
-        if self._session:
-            self._session.remove()
+    def init_session(self):
+        # 显示创建
+        self.ScopedSession()
+        return self._session
+
+    def close_session(self):
+        self._session.remove()
 
 
 if __name__ == '__main__':
