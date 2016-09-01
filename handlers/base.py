@@ -46,9 +46,12 @@ class BaseHandler(BaseRequestHandler):
         if not data:
             data = []
         response['data'] = data
-        # 响应类型
-        self.set_header('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS')
-        # 响应头设置
-        self.set_header('Access-Control-Allow-Headers', 'x-requested-with,content-type')
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.set_default_headers()
         self.finish(json.dumps(response, ensure_ascii=False))    # ensure_ascii True为转换为ascii码
+
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Headers', '*')
+        self.set_header('Access-Control-Allow-Methods', 'GET,HEAD,POST,DELETE,PATCH,PUT,OPTIONS')
+        self.set_header('Access-Control-Max-Age', 1000)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')

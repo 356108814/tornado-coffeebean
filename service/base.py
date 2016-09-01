@@ -6,10 +6,13 @@
 """
 from coffeebean.log import logger
 from coffeebean.cache import Cache
+from coffeebean.db import SQLAlchemy
 
 
 class BaseService(object):
     def __init__(self):
         self.logger = logger
         self.cache = Cache.current()
+        self.db = SQLAlchemy.instance()
+
 
