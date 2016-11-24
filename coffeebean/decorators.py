@@ -50,7 +50,7 @@ validate_form = ValidateForm()
 def valid(cfg, is_body_arg=False):
     """
     数据验证器，在handler层，在service不再验证参数
-    示例：@valid(cfg={'age': 'int'})
+    示例：@valid(cfg={'name': {'type': 'string', 'required': True}})
     @param cfg验证配置,dict类型
     @param is_body_arg 是否为请求体参数
     """
@@ -74,7 +74,7 @@ def valid(cfg, is_body_arg=False):
                     return func(*args, **kwargs)
                 else:
                     response = {'success': False, 'errcode': 'INVALID_ARGUMENTS', 'error_msg': error_msg}
-                    request_handler.finish(json.dump(response))
+                    request_handler.finish(json.dumps(response, ensure_ascii=False))
         return wrapper
     return handle_func
 
