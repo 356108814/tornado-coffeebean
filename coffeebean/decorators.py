@@ -6,10 +6,11 @@
 """
 import json
 
-from .cache import cache
+from .cache import Cache
 from .valid.validate import ValidateForm
 from .valid.validate import ValidateParam
 
+cache = Cache.current()
 
 def cacheable(timeout=60):
     """
