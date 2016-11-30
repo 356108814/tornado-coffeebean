@@ -1,4 +1,5 @@
 # coding:utf-8
+from queue import Queue
 
 import pymysql
 
@@ -7,17 +8,21 @@ class DBMySQL(object):
     """
     数据库操作基类
     """
-
     def __init__(self, host, port, user, password, db):
-        # TODO 连接池实现
-        self._connections = []
+        self.pool_size = 10
+        self._pool = Queue(maxsize=self.pool_size)
         self._host = host
         self._port = int(port)
         self._user = user
         self._password = password
         self._db = db
 
-        self._connection = self.create_connection()
+        self._connection = None
+        self.init_pool(self.pool_size)
+
+    def init_pool(self, pool_size):
+        for x in range(pool_size):
+            self._pool.put_nowait(self.create_connection())
 
     def create_connection(self):
         connection = pymysql.connect(host=self._host,
@@ -32,7 +37,16 @@ class DBMySQL(object):
 
     @property
     def connection(self):
+        self._connection = self._pool.get(True)
+        if not self.ping():
+            self._connection.connect()
         return self._connection
+
+    def ping(self):
+        try:
+            return self._connection.query('SELECT 1')
+        except Exception:
+            return None
 
     def query(self, sql, params_dict=None, is_fetchone=False):
         """
@@ -42,6 +56,7 @@ class DBMySQL(object):
         @param is_fetchone 是否只返回一条记录
         @return dict列表或dict
         """
+        result = None
         with self.connection.cursor() as cursor:
             # sql格式化
             if params_dict:
@@ -64,24 +79,31 @@ class DBMySQL(object):
         @param params_dict:
         @return:
         """
-        with self.connection.cursor() as cursor:
+        is_success = False
+        connection = self.connection
+        with connection.cursor() as cursor:
             # sql格式化
             if params_dict:
                 for (key, value) in params_dict.items():
                     sql = sql.replace('{%s}' % key, value)
             try:
                 cursor.execute(sql)
+                is_success = True
             except Exception as e:
                 raise e
-        self.connection.commit()
+        connection.commit()
+        return is_success
 
     def close(self):
-        if self.connection:
-            self.connection.close()
+        # if self.connection:
+        #     self.connection.close()
+        while not self._pool.empty():
+            self._pool.get(True).close()
 
 
 if __name__ == '__main__':
-    dbMySQL = DBMySQL(host='localhost', port=3306, user='root', password='root', db='aimei_data')
-    sql = 'select * from t_data_aimei_user_action_201608 limit 0, 11'
-    result = dbMySQL.query(sql)
-    print(result)
+    pass
+    # dbMySQL = DBMySQL(host='172.16.30.6', port=3306, user='minik_act', password='cvcRixego3Ju2bi+', db='minikinvestment')
+    # sql = 'select * from applicant'
+    # result = dbMySQL.query(sql)
+    # print(result)
