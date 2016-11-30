@@ -134,6 +134,15 @@ class DateUtil(object):
     def now(fmt='%Y-%m-%d'):
         return datetime.datetime.now().strftime(fmt)
 
+    @staticmethod
+    def str2date(date_str, fmt='%Y-%m-%d'):
+        return datetime.datetime.strptime(date_str, fmt).date()
+
+    @staticmethod
+    def get_last_day_of_month(year, month):
+        day = calendar.monthrange(year, month)[1]
+        return day
+
 
 dateUtil = DateUtil()
 
@@ -155,3 +164,4 @@ if __name__ == '__main__':
     print(time.strftime('%Y-%m-%d %H:%M:%S', timeTuple))
     # print dateUtil.is_valid_date('2016-02-29')
     print(dateUtil.get_range_date_list('2015-02-24', '2016-03-02'))
+    print(dateUtil.get_last_day_of_month(2016, 4))
