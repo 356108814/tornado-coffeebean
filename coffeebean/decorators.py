@@ -4,7 +4,13 @@
 @author Yuriseus
 @create 2016-5-11 14:59
 """
+import functools
 import json
+import tornado.web
+from concurrent.futures import ThreadPoolExecutor
+
+from multiprocessing import cpu_count
+from tornado.ioloop import IOLoop
 
 from .cache import Cache
 from .valid.validate import ValidateForm
@@ -78,6 +84,42 @@ def valid(cfg, is_body_arg=False):
                     request_handler.finish(json.dumps(response, ensure_ascii=False))
         return wrapper
     return handle_func
+
+
+EXECUTOR = ThreadPoolExecutor(max_workers=cpu_count())
+
+
+def unblock(http_method):
+    # 必须添加该装饰器，表明当前方法结束后，并不finish该请求
+    # Tornado请求执行的流程默认是: initialize()->prepare()->http_method(get/post等)->finish()
+    # 当用unblock装饰器装饰后，http_method实际是执行下面的_wrapper()方法，在_wrapper中我们只是将原始的
+    # http_method提交给线程池处理，所以还没有执行完该http_method，所以还不能finish该请求
+    @tornado.web.asynchronous
+    @functools.wraps(http_method)
+    def wrapper(self, *args, **kwargs):
+        # 以下的callback必须在主线程执行
+        # self.write(),self.finish()等都不是线程安全的
+        def callback(future):
+            data, response_code = future.result()
+            self.write_response(data, response_code=response_code)
+        _future = EXECUTOR.submit(functools.partial(http_method, self, *args, **kwargs))
+        IOLoop.current().add_future(_future, callback)
+    return wrapper
+
+
+def async_execute(func):
+    """
+    放在线程池中异步执行
+    :param func:
+    :return:
+    """
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        future = EXECUTOR.submit(functools.partial(func, self, *args, **kwargs))
+        func_callback = kwargs.pop('callback', None)
+        if func_callback:
+            IOLoop.current().add_future(future, func_callback)
+    return wrapper
 
 
 if __name__ == '__main__':

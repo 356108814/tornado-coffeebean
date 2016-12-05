@@ -8,9 +8,8 @@ class DBMySQL(object):
     """
     数据库操作基类
     """
-    def __init__(self, host, port, user, password, db):
-        self.pool_size = 10
-        self._pool = Queue(maxsize=self.pool_size)
+    def __init__(self, host, port, user, password, db, pool_size=5):
+        self._pool = Queue(maxsize=pool_size)
         self._host = host
         self._port = int(port)
         self._user = user
@@ -18,11 +17,17 @@ class DBMySQL(object):
         self._db = db
 
         self._connection = None
-        self.init_pool(self.pool_size)
+        self.init_pool(pool_size)
 
     def init_pool(self, pool_size):
         for x in range(pool_size):
-            self._pool.put_nowait(self.create_connection())
+            self.put_to_pool(self.create_connection())
+
+    def put_to_pool(self, conn):
+        try:
+            self._pool.put_nowait(conn)
+        except Exception as e:
+            raise Exception('put_to_pool error')
 
     def create_connection(self):
         connection = pymysql.connect(host=self._host,
@@ -30,7 +35,7 @@ class DBMySQL(object):
                                      user=self._user,
                                      password=self._password,
                                      db=self._db,
-                                     autocommit=False,
+                                     autocommit=True,
                                      charset='utf8',
                                      cursorclass=pymysql.cursors.DictCursor)
         return connection
@@ -57,19 +62,17 @@ class DBMySQL(object):
         @return dict列表或dict
         """
         result = None
-        with self.connection.cursor() as cursor:
-            # sql格式化
-            if params_dict:
-                for (key, value) in params_dict.items():
-                    sql = sql.replace('{%s}' % key, value)
+        connection = self.connection
+        with connection.cursor() as cursor:
             try:
-                cursor.execute(sql)
+                cursor.execute(sql, params_dict)
+                if is_fetchone:
+                    result = cursor.fetchone()
+                else:
+                    result = cursor.fetchall()
             except Exception as e:
                 raise e
-            if is_fetchone:
-                result = cursor.fetchone()
-            else:
-                result = cursor.fetchall()
+        self.put_to_pool(connection)
         return result
 
     def execute(self, sql, params_dict=None):
@@ -82,28 +85,27 @@ class DBMySQL(object):
         is_success = False
         connection = self.connection
         with connection.cursor() as cursor:
-            # sql格式化
-            if params_dict:
-                for (key, value) in params_dict.items():
-                    sql = sql.replace('{%s}' % key, value)
             try:
-                cursor.execute(sql)
+                # sql 格式INSERT applicant (from_type, name) VALUES (%(from_type)s, %(name)s)
+                # params_dict 格式 {'from_type': 1, 'name': 'yuri'}
+                cursor.execute(sql, params_dict)
                 is_success = True
+                connection.commit()
             except Exception as e:
                 raise e
-        connection.commit()
+        self.put_to_pool(connection)
         return is_success
 
     def close(self):
-        # if self.connection:
-        #     self.connection.close()
         while not self._pool.empty():
             self._pool.get(True).close()
 
 
 if __name__ == '__main__':
     pass
-    # dbMySQL = DBMySQL(host='172.16.30.6', port=3306, user='minik_act', password='cvcRixego3Ju2bi+', db='minikinvestment')
-    # sql = 'select * from applicant'
-    # result = dbMySQL.query(sql)
-    # print(result)
+    # for x in range(100):
+    #     dbMySQL = DBMySQL(host='localhost', port=3306, user='root', password='root', db='test')
+    #     sql = "insert applicant(name) values ('%s')" % x
+    #     r = dbMySQL.execute(sql)
+    #     print(r)
+
