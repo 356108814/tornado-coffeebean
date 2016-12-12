@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-
+handler基类
 @author Yuriseus
 @create 2016-8-1 18:09
 """
@@ -46,10 +46,10 @@ class BaseHandler(BaseRequestHandler):
         if not data:
             data = []
         response['data'] = data
-        self.set_default_headers()
+        self.set_default_ajax_headers()
         self.finish(json.dumps(response, ensure_ascii=False))    # ensure_ascii True为转换为ascii码
 
-    def set_default_headers(self):
+    def set_default_ajax_headers(self):
         self.set_header('Access-Control-Allow-Origin', '*')
         self.set_header('Access-Control-Allow-Headers', '*')
         self.set_header('Access-Control-Allow-Methods', 'GET,HEAD,POST,DELETE,PATCH,PUT,OPTIONS')

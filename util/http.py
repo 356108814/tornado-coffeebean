@@ -11,7 +11,7 @@ from tornado.log import gen_log
 from urllib.parse import urlencode
 
 
-class HttpHelper(object):
+class HttpUtil(object):
     def __init__(self):
         pass
 
@@ -34,7 +34,7 @@ class HttpHelper(object):
 
     def get_data(self, url, headers=None):
         content = self.fetch(url, method='GET', headers=headers)
-        return HttpHelper.__to_json(content)
+        return self.to_json(content)
 
     def post_data(self, url, headers=None, body=None, is_need_encode_body=False):
         if is_need_encode_body:
@@ -43,10 +43,9 @@ class HttpHelper(object):
             if body is not None and not isinstance(body, str):
                 body = str(body)
         content = self.fetch(url, method='POST', headers=headers, body=body)
-        return HttpHelper.__to_json(content)
+        return self.to_json(content)
 
-    @staticmethod
-    def __to_json(content):
+    def to_json(self, content):
         try:
             if content:
                 content = json.loads(content)

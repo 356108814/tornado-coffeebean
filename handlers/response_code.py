@@ -15,5 +15,6 @@ class ResponseCode(Enum):
     ILLEGAL_REQUEST = (2, u'非法请求')
 
     # 业务接口，从100开始，每个模块占100位，如用户模块1开头
-    USER_NOT_LOGIN = (100, u'用户未登陆')
+    USER_VALID_ERROR = (100, u'用户名或密码错误')
+
 

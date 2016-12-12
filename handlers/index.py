@@ -16,4 +16,4 @@ class IndexHandler(BaseHandler):
         users = pagination.items
         print(users)
         self.finish('Hello %s' % self.session['user'])
-        pass
+

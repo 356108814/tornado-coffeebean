@@ -8,26 +8,30 @@ import time
 class DateUtil(object):
 
     @staticmethod
-    def get_interval_day_date(start_time, days=-7, fmt='%Y-%m-%d'):
+    def get_interval_day_date(start_date, days=-7, fmt='%Y-%m-%d'):
         """
         获取间隔intervalDay天后的日期
-        @param start_time 起始日期
+        @param start_date 起始日期 datetime or str
         @param days 间隔天数
         """
-        # TODO 优化
-        end_time = start_time + datetime.timedelta(days=days)   # datetime类型
+        if isinstance(start_date, str):
+            start_date = DateUtil.str2date(start_date)
+        end_time = start_date + datetime.timedelta(days=days)   # datetime类型
         timestamp = int(time.mktime(end_time.timetuple()))
         time_array = time.localtime(timestamp)
         return time.strftime(fmt, time_array)
 
     @staticmethod
-    def date_format(date_time, format_str='%Y-%m-%d'):
+    def date_format(date_time, fmt='%Y-%m-%d'):
         """
         日期格式化
+        :param date_time: datetime
+        :param fmt:
+        :return:
         """
         timestamp = int(time.mktime(date_time.timetuple()))
         time_array = time.localtime(timestamp)
-        return time.strftime(format_str, time_array)
+        return time.strftime(fmt, time_array)
 
     @staticmethod
     def utc2local(utc_timestamp):
@@ -65,7 +69,7 @@ class DateUtil(object):
         try:
             time.strptime(datestr, "%Y-%m-%d")
             return True
-        except:
+        except Exception as e:
             return False
 
     @staticmethod

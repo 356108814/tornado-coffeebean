@@ -8,7 +8,7 @@ import random
 import string
 
 
-class RandomHelper(object):
+class RandomUtil(object):
 
     @staticmethod
     def random_string(num=10):

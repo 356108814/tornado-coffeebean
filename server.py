@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-服务
+服务器启动入口
 @author Yuriseus
 @create 2016-8-1 14:55
 """
@@ -41,12 +41,13 @@ def set_log_setting():
 
 
 def print_server_info():
-    if settings.DEBUG:
-        print('='*30 + 'server info' + '='*30)
-        print('tornado version: %s' % tornado.version)
-        print('server started. development server at http://%s:%s/' % (options.address, options.port))
+    print('='*30 + 'server info' + '='*30)
+    print('tornado version: %s' % tornado.version)
+    print('server started. development server at http://%s:%s/' % (options.address, options.port))
 
 if __name__ == '__main__':
+    # 启动带参数
+    # python server.py -address 127.0.0.1 -port 8891
     main()
-    # --port=8891 --log_file_prefix=log --log_rotate_mode=time
+
 

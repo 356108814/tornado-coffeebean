@@ -10,9 +10,9 @@ from coffeebean.interceptor.interface import Interceptor
 class AuthInterceptor(Interceptor):
     def intercept(self, handler):
         path = handler.request.path
-        if path not in ['/login/']:
+        if path not in ['/login/', '/login']:
             user = handler.session['user']
             if not user:
-                handler.redirect('/login/')
+                handler.redirect('/login')
             return True
 

@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-基础业务类
+基础业务类，数据库操作使用sqlalchemy
 @author Yuriseus
 @create 2016-8-3 20:10
 """
