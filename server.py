@@ -25,6 +25,7 @@ def main():
     print_server_info()
     application = Application()
     sockets = bind_sockets(options.port)
+    tornado.process.fork_processes(0)
     server = HTTPServer(application, xheaders=settings.XHEADERS)
     server.add_sockets(sockets)
     IOLoop.current().start()

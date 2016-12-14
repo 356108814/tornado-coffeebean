@@ -1,13 +1,12 @@
 # encoding: utf-8
 """
-excel工具类。只适用于openpyxl 2.3.3版本，最新版需要修改
+excel工具类
 @author Yuriseus
 @create 2016-9-1 15:39
 """
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Alignment
 from openpyxl.styles.colors import *
-from openpyxl.writer.excel import ExcelWriter
 
 
 class ExcelUtil(object):
@@ -41,7 +40,6 @@ class ExcelUtil(object):
     @staticmethod
     def write_to_excel(excel_file, data_list, column_width=20.0):
         wb = Workbook()
-        excel_writer = ExcelWriter(workbook=wb)
         sheet = wb.worksheets[0]
         sheet.name = ''
         merge_row = -1
@@ -64,7 +62,7 @@ class ExcelUtil(object):
             align = Alignment(horizontal='center', vertical='center')
             cell.font = font
             cell.alignment = align
-        excel_writer.save(excel_file)
+        wb.save(excel_file)
 
     @staticmethod
     def write_to_excel_by_sheet_data_list(excel_file, sheet_data_list):
@@ -75,7 +73,6 @@ class ExcelUtil(object):
         :return:
         """
         wb = Workbook()
-        excel_writer = ExcelWriter(workbook=wb)
         for sheet_index, sheet_data in enumerate(sheet_data_list):
             if sheet_index == 0:
                 sheet = wb.worksheets[sheet_index]
@@ -108,4 +105,4 @@ class ExcelUtil(object):
                 cell.font = font
                 cell.alignment = align
 
-        excel_writer.save(excel_file)
+        wb.save(excel_file)
